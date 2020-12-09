@@ -15,8 +15,10 @@
 
 	
 	
-module  color_mapper ( input        [9:0] BallX, BallY, DrawX, DrawY, Ball_size, 
+module  color_mapper ( input [1:0] a [23:0],
+				input        [9:0] BallX, BallY, DrawX, DrawY, Ball_size, 
 		       output logic [7:0]  Red, Green, Blue
+				 output [1:0] b [23:0]
 		     
 /////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////
@@ -34,19 +36,28 @@ module  color_mapper ( input        [9:0] BallX, BallY, DrawX, DrawY, Ball_size,
 
 	
 	 logic ball_on;
-	 logic food_on, foodspec1_on, foodspec2_on, foodspec3_on, foodspec4_on; //foodspec are the special beans
+	 int res[$];
 	 //keep track of the beans
-	 logic food1_on, food2_on, food3_on, food4_on, food5_on, food6_on, food7_on, food8_on, food9_on, food10_on;
-	 logic food11_on, food12_on, food13_on, food14_on, food15_on, food16_on, food17_on, food18_on, food19_on, food20_on;
-	 logic food21_on, food22_on, food23_on, food24_on, food25_on, food26_on, food27_on, food28_on, food29_on, food30_on;
-	 logic food31_on, food32_on, food33_on, food34_on, food35_on, food36_on, food37_on, food38_on, food39_on, food40_on;
 	 logic wall_on;
 	 logic ghost_onr, ghost_onp, ghost_onb;
-	 //logic [9:0] food_size;
-	
-	//assign food_size = 1;
-	
-	
+	 logic [1:0] is_food [23:0];
+	 logic [1:0] a [23:0];
+	 
+	 int special_loc_x[3:0];
+	 int special_loc_y[3:0];
+	 logic [1:0] is_special [3:0];
+	 
+	 parameter width_pacman = 20;
+	 parameter height_pacman = 20;
+	 parameter pacman_file = "pacman2.txt";
+	 int pacman_mem_loc;
+	 logic pacman_on;
+	 logic memory_pac [width_pacman*height_pacman];
+	 
+	 initial begin
+		$readmemb(pacman_file, memory_pac);
+	 end
+		
 	
 	
  /* Old Ball: Generated square box by checking if the current pixel is within a square of length
@@ -86,338 +97,92 @@ module  color_mapper ( input        [9:0] BallX, BallY, DrawX, DrawY, Ball_size,
 			
 		//if ((DrawX==10'd72)&&(DrawY==10'd24))
 		//	food_on=1'b1;
-always_comb
-	begin
-		if ((DrawX > (10'd72 - 10'd2))&&(DrawY > (10'd72 - 10'd2))&&(DrawX <= (10'd72 + 10'd2))&&(DrawY <= (10'd72 + 10'd2)))
-			food1_on = 1'b1;
-		else
-			food1_on = 1'b0;
-	end
-	
-///////////////////////
-// SPecial Bean
-always_comb
-	begin
-		if ((DrawX > (10'd72 - 10'd3))&&(DrawY > (10'd168 - 10'd3))&&(DrawX <= (10'd72 + 10'd3))&&(DrawY <= (10'd168 + 10'd3)))
-			foodspec1_on=1'b1;
-		else
-			foodspec1_on = 1'b0;
-	end
-/////////////////////
-		
-always_comb
-	begin
-		if ((DrawX > (10'd72 - 10'd2))&&(DrawY > (10'd264 - 10'd2))&&(DrawX <= (10'd72 + 10'd2))&&(DrawY <= (10'd264 + 10'd2)))
-			food2_on=1'b1;
-		else
-			food2_on = 1'b0;
-	end
-	
-always_comb
-	begin
-		if ((DrawX > (10'd72 - 10'd2))&&(DrawY > (10'd360 - 10'd2))&&(DrawX <= (10'd72 + 10'd2))&&(DrawY <= (10'd360 + 10'd2)))
-			food3_on=1'b1;
-		else
-			food3_on = 1'b0;
-	end 
-		
-always_comb
-	begin
-		if ((DrawX > (10'd120 - 10'd2))&&(DrawY > (10'd120 - 10'd2))&&(DrawX <= (10'd120 + 10'd2))&&(DrawY <= (10'd120 + 10'd2)))
-			food4_on=1'b1;
-		else
-			food4_on = 1'b0;
-	end
+
 
 always_comb
 	begin
-		if ((DrawX > (10'd120 - 10'd2))&&(DrawY > (10'd216 - 10'd2))&&(DrawX <= (10'd120 + 10'd2))&&(DrawY <= (10'd216 + 10'd2)))
-			food5_on=1'b1;
-		else
-			food5_on = 1'b0;
-	end
+		int first_pos = 10'd72;
+		int margin = 10'd2; // replace by food_size/2
+		int bean_dist = 10'd96;
 		
+		for (int i = 1; i<= 6; i=i+1) begin
+			for (int j = 1; j<= 4; j=j+1) begin
+				
+				//int food_x = first_pos + (i-1)*bean_dist;
+				//int food_y = first_pos + (j-1)*bean_dist;
+				
+			if ((DrawX > (first_pos + (i-1)*bean_dist - margin)) && (DrawY > (first_pos + (j-1)*bean_dist - margin)) && (DrawX <= (first_pos + (i-1)*bean_dist + margin)) && (DrawY <= (first_pos + (j-1)*bean_dist + margin)))
+				is_food[(i-1)*4+j-1] = 1'b1;
+			else 
+				is_food[(i-1)*4+j-1] = 1'b0;
+			
+			end
+		end
+	end
+
+	
 always_comb
 	begin
-		if ((DrawX > (10'd120 - 10'd2))&&(DrawY > (10'd312 - 10'd2))&&(DrawX <= (10'd120 + 10'd2))&&(DrawY <= (10'd312 + 10'd2)))
-			food6_on=1'b1;
-		else
-			food6_on = 1'b0;
-	end
+		//checking for special beans
 		
-always_comb
-	begin
-		if ((DrawX > (10'd120 - 10'd2))&&(DrawY > (10'd216 - 10'd2))&&(DrawX <= (10'd120 + 10'd2))&&(DrawY <= (10'd216 + 10'd2)))
-			food7_on=1'b1;
-		else
-			food7_on = 1'b0;
-	end
-	
-always_comb
-	begin
-		if ((DrawX > (10'd168 - 10'd2))&&(DrawY > (10'd72 - 10'd2))&&(DrawX <= (10'd168 + 10'd2))&&(DrawY <= (10'd72 + 10'd2)))
-			food8_on=1'b1;
-		else
-			food8_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd168 - 10'd2))&&(DrawY > (10'd168 - 10'd2))&&(DrawX <= (10'd168 + 10'd2))&&(DrawY <= (10'd168 + 10'd2)))
-			food9_on=1'b1;
-		else
-			food9_on = 1'b0;
-	end	
-	
-always_comb
-	begin
-		if ((DrawX > (10'd168 - 10'd2))&&(DrawY > (10'd264 - 10'd2))&&(DrawX <= (10'd168 + 10'd2))&&(DrawY <= (10'd264 + 10'd2)))
-			food10_on=1'b1;
-		else
-			food10_on = 1'b0;
-	end	
-		// ///////////////////////
-		/////////Special Bean
-always_comb
-	begin
-		if ((DrawX > (10'd168 - 10'd3))&&(DrawY > (10'd360 - 10'd3))&&(DrawX <= (10'd168 + 10'd3))&&(DrawY <= (10'd360 + 10'd3)))
-			foodspec2_on=1'b1;
-		else
-			foodspec2_on = 1'b0;
-	end
-		//////////////////////////
-
-always_comb
-	begin
-		if ((DrawX > (10'd216 - 10'd2))&&(DrawY > (10'd120 - 10'd2))&&(DrawX <= (10'd216 + 10'd2))&&(DrawY <= (10'd120 + 10'd2)))
-			food11_on=1'b1;
-		else
-			food11_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd216 - 10'd2))&&(DrawY > (10'd216 - 10'd2))&&(DrawX <= (10'd216 + 10'd2))&&(DrawY <= (10'd216 + 10'd2)))
-			food12_on=1'b1;
-		else
-			food12_on = 1'b0;
-	end	
-always_comb
-	begin
-		if ((DrawX > (10'd216 - 10'd2))&&(DrawY > (10'd312 - 10'd2))&&(DrawX <= (10'd216 + 10'd2))&&(DrawY <= (10'd312 + 10'd2)))
-			food13_on=1'b1;
-		else
-			food13_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd216 - 10'd2))&&(DrawY > (10'd408 - 10'd2))&&(DrawX <= (10'd216 + 10'd2))&&(DrawY <= (10'd408 + 10'd2)))
-			food14_on=1'b1;
-		else
-			food14_on = 1'b0;
-	end	
-always_comb
-	begin
-		if ((DrawX > (10'd264 - 10'd2))&&(DrawY > (10'd72 - 10'd2))&&(DrawX <= (10'd264 + 10'd2))&&(DrawY <= (10'd72 + 10'd2)))	
-			food15_on=1'b1;
-		else
-			food15_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd264 - 10'd2))&&(DrawY > (10'd168 - 10'd2))&&(DrawX <= (10'd264 + 10'd2))&&(DrawY <= (10'd168 + 10'd2)))
-			food16_on=1'b1;
-		else
-			food16_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd264 - 10'd2))&&(DrawY > (10'd264 - 10'd2))&&(DrawX <= (10'd264 + 10'd2))&&(DrawY <= (10'd264 + 10'd2)))
-			food17_on=1'b1;
-		else
-			food17_on = 1'b0;
-	end	
-always_comb
-	begin
-		if ((DrawX > (10'd264 - 10'd2))&&(DrawY > (10'd360 - 10'd2))&&(DrawX <= (10'd264 + 10'd2))&&(DrawY <= (10'd360 + 10'd2)))
-			food18_on=1'b1;
-		else
-			food18_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd312 - 10'd2))&&(DrawY > (10'd120 - 10'd2))&&(DrawX <= (10'd312 + 10'd2))&&(DrawY <= (10'd120 + 10'd2)))
-			food19_on=1'b1;
-		else
-			food19_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd312 - 10'd2))&&(DrawY > (10'd216 - 10'd2))&&(DrawX <= (10'd312 + 10'd2))&&(DrawY <= (10'd216 + 10'd2)))
-			food20_on=1'b1;
-		else
-			food20_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd312 - 10'd2))&&(DrawY > (10'd312 - 10'd2))&&(DrawX <= (10'd312 + 10'd2))&&(DrawY <= (10'd312 + 10'd2)))
-			food21_on=1'b1;
-		else
-			food21_on = 1'b0;
-	end
+		int margin_special = 10'd6;
 		
-always_comb
-	begin
-		if ((DrawX > (10'd312 - 10'd2))&&(DrawY > (10'd408 - 10'd2))&&(DrawX <= (10'd312 + 10'd2))&&(DrawY <= (10'd408 + 10'd2)))
-			food22_on=1'b1;
-		else
-			food22_on = 1'b0;
+		special_loc_x = '{72, 168, 456, 552};
+		special_loc_y = '{168, 360, 360, 168};
+		
+		
+		for(int i = 0; i<4; i = i + 1) begin
+			
+			if ((DrawX > special_loc_x[i] - margin_special) && (DrawX < special_loc_x[i] + margin_special) && (DrawY > special_loc_y[i] - margin_special) && (DrawY < special_loc_y[i] + margin_special))
+				is_special[i] = 1'b1;
+			else
+				is_special[i] = 1'b0;
+		end
+		
 	end
-always_comb
-	begin
-		if ((DrawX > (10'd360 - 10'd2))&&(DrawY > (10'd72 - 10'd2))&&(DrawX <= (10'd360 + 10'd2))&&(DrawY <= (10'd72 + 10'd2)))
-			food23_on=1'b1;
-		else
-			food23_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd360 - 10'd2))&&(DrawY > (10'd168 - 10'd2))&&(DrawX <= (10'd360 + 10'd2))&&(DrawY <= (10'd168 + 10'd2)))
-			food24_on=1'b1;
-		else
-			food24_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd360 - 10'd2))&&(DrawY > (10'd264 - 10'd2))&&(DrawX <= (10'd360 + 10'd2))&&(DrawY <= (10'd264 + 10'd2)))
-			food25_on=1'b1;
-		else
-			food25_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd360 - 10'd2))&&(DrawY > (10'd360 - 10'd2))&&(DrawX <= (10'd360 + 10'd2))&&(DrawY <= (10'd360 + 10'd2)))
-			food26_on=1'b1;
-		else
-			food26_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd408 - 10'd2))&&(DrawY > (10'd120 - 10'd2))&&(DrawX <= (10'd408 + 10'd2))&&(DrawY <= (10'd120 + 10'd2)))
-			food27_on=1'b1;
-		else
-			food27_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd408 - 10'd2))&&(DrawY > (10'd216 - 10'd2))&&(DrawX <= (10'd408 + 10'd2))&&(DrawY <= (10'd216 + 10'd2)))
-			food28_on=1'b1;
-		else
-			food28_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd408 - 10'd2))&&(DrawY > (10'd312 - 10'd2))&&(DrawX <= (10'd408 + 10'd2))&&(DrawY <= (10'd312 + 10'd2)))
-			food29_on=1'b1;
-		else
-			food29_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd408 - 10'd2))&&(DrawY > (10'd408 - 10'd2))&&(DrawX <= (10'd408 + 10'd2))&&(DrawY <= (10'd408 + 10'd2)))
-			food30_on=1'b1;
-		else
-			food30_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd456 - 10'd2))&&(DrawY > (10'd72 - 10'd2))&&(DrawX <= (10'd456 + 10'd2))&&(DrawY <= (10'd72 + 10'd2)))
-			food31_on=1'b1;
-		else
-			food31_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd456 - 10'd2))&&(DrawY > (10'd168 - 10'd2))&&(DrawX <= (10'd456 + 10'd2))&&(DrawY <= (10'd168 + 10'd2)))
-			food32_on=1'b1;
-		else
-			food32_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd456 - 10'd2))&&(DrawY > (10'd264 - 10'd2))&&(DrawX <= (10'd456 + 10'd2))&&(DrawY <= (10'd264 + 10'd2)))
-			food33_on=1'b1;
-		else
-			food33_on = 1'b0;
-	end
-		//////////////////
-		// Special Bean
-
-always_comb
-	begin
-		if ((DrawX > (10'd456 - 10'd3))&&(DrawY > (10'd360 - 10'd3))&&(DrawX <= (10'd456 + 10'd3))&&(DrawY <= (10'd360 + 10'd3)))
-			foodspec3_on=1'b1;
-		else
-			foodspec3_on = 1'b0;
-	end
-		/////////////////////
-
-always_comb
-	begin
-		if ((DrawX > (10'd504 - 10'd2))&&(DrawY > (10'd120 - 10'd2))&&(DrawX <= (10'd504 + 10'd2))&&(DrawY <= (10'd120 + 10'd2)))
-			food34_on=1'b1;
-		else
-			food34_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd504 - 10'd2))&&(DrawY > (10'd216 - 10'd2))&&(DrawX <= (10'd504 + 10'd2))&&(DrawY <= (10'd216 + 10'd2)))
-			food35_on=1'b1;
-		else
-			food35_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd504 - 10'd2))&&(DrawY > (10'd312 - 10'd2))&&(DrawX <= (10'd504 + 10'd2))&&(DrawY <= (10'd312 + 10'd2)))
-			food36_on=1'b1;
-		else
-			food36_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd504 - 10'd2))&&(DrawY > (10'd408 - 10'd2))&&(DrawX <= (10'd504 + 10'd2))&&(DrawY <= (10'd408 + 10'd2)))
-			food37_on=1'b1;
-		else
-			food37_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd552 - 10'd2))&&(DrawY > (10'd72 - 10'd2))&&(DrawX <= (10'd552 + 10'd2))&&(DrawY <= (10'd72 + 10'd2)))
-			food38_on=1'b1;
-		else
-			food38_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd552 - 10'd3))&&(DrawY > (10'd168 - 10'd3))&&(DrawX <= (10'd552 + 10'd3))&&(DrawY <= (10'd168 + 10'd3)))
-			foodspec4_on=1'b1;
-		else
-			foodspec4_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd552 - 10'd2))&&(DrawY > (10'd264 - 10'd2))&&(DrawX <= (10'd552 + 10'd2))&&(DrawY <= (10'd264 + 10'd2)))
-			food39_on=1'b1;
-		else
-			food39_on = 1'b0;
-	end
-always_comb
-	begin
-		if ((DrawX > (10'd552 - 10'd2))&&(DrawY > (10'd360 - 10'd2))&&(DrawX <= (10'd552 + 10'd2))&&(DrawY <= (10'd360 + 10'd2)))
-			food40_on=1'b1;
-		else
-			food40_on = 1'b0;
-	end
+				
 	
+// Check if food is eaten, a array keeps track of if food is eaten	
+				
+always_comb
+	begin
+		int first_pos = 10'd72;
+		int margin = 10'd2; // replace by food_size/2
+		int bean_dist = 10'd96;
+		
+		for (int i = 1; i<= 6; i=i+1) begin
+			for (int j = 1; j<= 4; j=j+1) begin
+				
+				//int food_x = first_pos + (i-1)*bean_dist;
+				//int food_y = first_pos + (j-1)*bean_dist;
+				
+			if ((BallX > (first_pos + (i-1)*bean_dist - margin)) && (BallY > (first_pos + (j-1)*bean_dist - margin)) && (BallX <= (first_pos + (i-1)*bean_dist + margin)) && (BallY <= (first_pos + (j-1)*bean_dist + margin)))
+				a[(i-1)*4+j-1] = 1'b0; // eaten -> 0
+			else 
+				a[(i-1)*4+j-1] = 1'b1; // not eaten -> 1
+			
+			end
+		end
+	end				
+				
+				
+
+// copy a into b
+always_comb
+	begin
+			
+		for (int i = 1; i<= 6; i=i+1) begin
+			for (int j = 1; j<= 4; j=j+1) begin
+				b[(i-1)*4+j-1] <= a[(i-1)*4+j-1]
+			end
+		end
 	
+	end
+				
+				
+				
+				
+			
 	
 	
 	//____________________________________________________
@@ -428,721 +193,116 @@ always_comb
 	
 	always_comb
 	begin
-	
+		
 	//boarder
 	
 		if ((DrawX>10'd22)&&(DrawX<10'd26)&&(DrawY>10'd22)&&(DrawY<10'd458))
 			wall_on=1'b1;
-		else if ((DrawX>10'd26)&&(DrawX<10'd602)&&(DrawY>10'd22)&&(DrawY<10'd26))
+		else if ((DrawX>=10'd26)&&(DrawX<10'd602)&&(DrawY>10'd22)&&(DrawY<10'd26))
 			wall_on=1'b1;
-		else if ((DrawX>10'd26)&&(DrawX<10'd602)&&(DrawY>10'd454)&&(DrawY<10'd458))
+		else if ((DrawX>=10'd26)&&(DrawX<10'd602)&&(DrawY>10'd454)&&(DrawY<10'd458))
 			wall_on=1'b1;
 		else if ((DrawX>10'd598)&&(DrawX<10'd602)&&(DrawY>10'd22)&&(DrawY<10'd458))
 			wall_on=1'b1;
 			
 	//maze walls		
 			//L shape 1
-		else if((DrawX>10'd93)&&(DrawX<10'd98)&&(DrawY>10'd96)&&(DrawY<10'd168))
+		else if((DrawX>10'd93)&&(DrawX<10'd98)&&(DrawY>10'd93)&&(DrawY<10'd168))
 			wall_on=1'b1;
 		else if((DrawY>10'd93)&&(DrawY<10'd98)&&(DrawX>10'd96)&&(DrawX<10'd168))
 			wall_on=1'b1;
 		
 		// L shape 2
-		else if((DrawX>10'd93)&&(DrawX<10'd98)&&(DrawY>10'd264)&&(DrawY<10'd384))
+		else if((DrawX>10'd93)&&(DrawX<10'd98)&&(DrawY>10'd264)&&(DrawY<10'd387))
 			wall_on=1'b1;
 		else if((DrawY>10'd382)&&(DrawY<10'd387)&&(DrawX>10'd96)&&(DrawX<10'd168))
 			wall_on=1'b1;
 		
 		// L shape 3
-		else if((DrawX>10'd526)&&(DrawX<10'd531)&&(DrawY>10'd96)&&(DrawY<10'd168))
+		else if((DrawX>10'd526)&&(DrawX<10'd531)&&(DrawY>10'd93)&&(DrawY<10'd168))
 			wall_on=1'b1;
 		else if((DrawY>10'd93)&&(DrawY<10'd98)&&(DrawX>10'd456)&&(DrawX<10'd527))
 			wall_on=1'b1; 
 		
 		//L shape 4
-		else if((DrawX>10'd526)&&(DrawX<10'd531)&&(DrawY>10'd264)&&(DrawY<10'd384))
+		else if((DrawX>10'd526)&&(DrawX<=10'd531)&&(DrawY>10'd264)&&(DrawY<10'd387))
 			wall_on=1'b1;
 		else if((DrawY>10'd382)&&(DrawY<10'd387)&&(DrawX>10'd456)&&(DrawX<10'd527))
-			wall_on=1'b1;				
-			
+			wall_on=1'b1;					
 		else 
 			wall_on=1'b0;
 	end
 	
+	
+// PACMAN check
 
-//________________________________________________________________________________
-//________________________________________________________________________________
-	
-	// Check for Collision With Pacman and Food
-//________________________________________________________________________________
-//________________________________________________________________________________
-	
-/*	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit1 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit1 <= 1'b1;
-			else
-				foodhit1 <= 1'b0;
+always_comb 
+	begin
+		
+		pacman_mem_loc = 0;
+		
+		if ((DistX >= -width_pacman/2) && (DistX < width_pacman/2) && (DistY >= -height_pacman/2) && (DistY < height_pacman/2))
+		begin	
+			pacman_on = 1'b1;
+			pacman_mem_loc = (DistX + width_pacman/2) + (DistY + height_pacman/2)*width_pacman;
 		end
-end
-	
-	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodspechit1 <=1'b0;
-	else
+		else
 		begin
-			if ((BallX > (10'd72 - 10'd3))&&(BallY > (10'd168 - 10'd3))&&(BallX <= (10'd72 + 10'd3))&&(BallY <= (10'd72 + 10'd2)))
-				foodspechit1 <= 1'b1;
-			else
-				foodspechit1 <= 1'b0;
+			pacman_on = 1'b0;
 		end
-end	
-	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-always_ff @ (posedge frame_clk) begin
-	if(Reset)
-		foodhit2 <=1'b0;
-	else
-		begin
-			if ((BallX > (10'd72 - 10'd2))&&(BallY > (10'd72 - 10'd2))&&(BallX <= (10'd72 + 10'd2))&&(BallY <= (10'd72 + 10'd2)))
-				foodhit2 <= 1'b1;
-			else
-				foodhit2 <= 1'b0;
-		end
-end	
-	
-*/
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+		
+	end
+			
 		
 		
     always_comb
     begin:RGB_Display
 	
-			if ((wall_on == 1'b1))
+		if ((wall_on == 1'b1))
+		begin
+			Red = 8'h2e;
+         Green = 8'hb9;
+         Blue = 8'hf7;
+		end   
+		
+		else if ((pacman_on == 1'b1) && (memory_pac[pacman_mem_loc] == 1'b1)) 
+		begin
+		   Red = 8'hff;
+         Green = 8'h00;
+         Blue = 8'h00;
+		end
+			
+//        else if ((ball_on == 1'b1)) 
+//        begin 
+//            Red = 8'hff;
+//            Green = 8'hff;
+//            Blue = 8'h00;
+//        end    
+//		  
+		  else if ((is_food.or() == 1'b1))
+        begin 
+			res = is_food.find(x) with (x == 1'b1)
+			if(a[res] == 1'b0)
+				begin
+            Red = 8'hff;
+            Green = 8'hff;
+            Blue = 8'hff;
+				end
+			else
 			begin
-				Red = 8'h2e;
-            Green = 8'hb9;
-            Blue = 8'hf7;
-			end   
-	
-        else if ((ball_on == 1'b1)) 
-        begin 
-            Red = 8'hff;
-            Green = 8'hff;
+            Red = 8'h00; 
+            Green = 8'h00;
             Blue = 8'h00;
-        end    
-	/*	  else if ((food_on == 1'b1)) 
-        begin 
-            Red = 8'hff;
-            Green = 8'hff;
-            Blue = 8'hff;
-        end 
-		*/  
-		  //beans
-       else if ((food1_on == 1'b1)||(food2_on == 1'b1)||(food3_on == 1'b1)||(food4_on == 1'b1)||(food5_on == 1'b1)||(food6_on == 1'b1)||(food7_on == 1'b1)||(food8_on == 1'b1)||(food9_on == 1'b1)||(food10_on == 1'b1)) 
-		  begin 
-            Red = 8'hff;
-            Green = 8'hff;
-            Blue = 8'hff;
+			end			
         end 
 		  
-        else if ((food11_on == 1'b1)||(food12_on == 1'b1)||(food13_on == 1'b1)||(food14_on == 1'b1)||(food15_on == 1'b1)||(food16_on == 1'b1)||(food17_on == 1'b1)||(food18_on == 1'b1)||(food19_on == 1'b1)||(food20_on == 1'b1))
-		  begin 
-            Red = 8'hff;
-            Green = 8'hff;
-            Blue = 8'hff;
-        end 
-		  
-        else if ((food21_on == 1'b1)||(food22_on == 1'b1)||(food23_on == 1'b1)||(food24_on == 1'b1)||(food25_on == 1'b1)||(food26_on == 1'b1)||(food27_on == 1'b1)||(food28_on == 1'b1)||(food29_on == 1'b1)||(food30_on == 1'b1))
-		  begin 
-            Red = 8'hff;
-            Green = 8'hff;
-            Blue = 8'hff;
-        end 
-		  
-        else if ((food31_on == 1'b1)||(food32_on == 1'b1)||(food33_on == 1'b1)||(food34_on == 1'b1)||(food35_on == 1'b1)||(food36_on == 1'b1)||(food37_on == 1'b1)||(food38_on == 1'b1)||(food39_on == 1'b1)||(food40_on == 1'b1))
-		  begin 
-            Red = 8'hff;
-            Green = 8'hff;
-            Blue = 8'hff;
-        end 
-		  
-		  //special beans
-        else if ((foodspec1_on == 1'b1)||(foodspec2_on == 1'b1)||(foodspec3_on == 1'b1)||(foodspec4_on == 1'b1)) 
-		  begin 
-            Red = 8'hff;
-            Green = 8'hff;
-            Blue = 8'hff;
-        end 
-		 
+		  else if ((is_special.or() == 1'b1))
+		  begin
+				Red = 8'hff;
+				Green = 8'hff;
+				Blue = 8'hff;
+		  end	
+				
 		  else 
 		  begin 
             Red = 8'h00; 

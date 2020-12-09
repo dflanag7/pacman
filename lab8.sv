@@ -171,9 +171,9 @@ vga_controller vga(
 							.DrawX(drawxsig),     
 							.DrawY(drawysig)
 							);   
+
 							
-							
-color_mapper color_mapper(
+color_mapper color_mapper( .a(b), // keep track of food eaten, CHECK if OKAY, should be initialized?
 									.BallX(ballxsig), 
 									.BallY(ballysig), 
 									.DrawX(drawxsig), 
@@ -181,7 +181,8 @@ color_mapper color_mapper(
 									.Ball_size(ballsizesig),
 									.Red(Red), 
 									.Green(Green), 
-									.Blue(Blue) 
+									.Blue(Blue),
+									.b(b) // keep track of food eaten (output) b<=a
 									);
 
 ball ball(
